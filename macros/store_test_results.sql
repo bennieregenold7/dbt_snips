@@ -8,7 +8,6 @@
   {%- set test_results = [] -%}
   {%- for result in results if result.node.resource_type == 'test' -%}
     {%- do test_results.append(result) -%}
-    {{ log(result, true) }}
   {%- endfor -%}
 
   {# if no tests were run, skip this iteration #}

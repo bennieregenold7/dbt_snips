@@ -17,7 +17,18 @@
 
   {{ log("Centralizing test data in " + central_tbl, info = true) if execute }}
 
-  create or replace table {{ central_tbl }} as (
+  {# Check if table exists #}
+  {% set central_table_query %} {{ dbt_utils.get_tables_by_pattern_sql(target.schema | upper, 'TEST_RESULTS_CENTRAL') }} {% endset %}
+  {% if execute %}
+    {% set central_table_exists = run_query(central_table_query) %}
+  {% endif %}
+
+  {% if central_table_exists%}
+    insert into {{ central_tbl }} (
+  {% else %}
+    create table {{ central_tbl }} as (
+  {% endif %}
+
   
   {% for result in test_results %}
 
@@ -42,7 +53,7 @@
       '{{ result.execution_time }}'::text as execution_time_seconds,
       '{{ result.status }}'::text as test_result,
       '{{ result.node.original_file_path }}'::text as file_test_defined,
-      '{{ result.node.compiled_sql | replace('\'','\"') }}'::text as compiled_sql,
+      '{{ result.node.compiled_sql | replace('\'','\"') }}'::varchar as compiled_sql,
       current_timestamp as _timestamp
     
     {{ "union all" if not loop.last }}
@@ -50,23 +61,6 @@
   {% endfor %}
   
   );
-
-  {% if target.name != 'default' %}
-      create table if not exists {{ history_tbl }} as (
-        select 
-          {{ dbt_utils.surrogate_key(["test_name", "test_result", "_timestamp"]) }} as sk_id, 
-          * 
-        from {{ central_tbl }}
-        where false
-      );
-
-    insert into {{ history_tbl }} 
-      select 
-       {{ dbt_utils.surrogate_key(["test_name", "test_result", "_timestamp"]) }} as sk_id, 
-       * 
-      from {{ central_tbl }}
-    ;
-  {% endif %}
 
 {% endmacro %}
 

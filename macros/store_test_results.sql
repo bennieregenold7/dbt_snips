@@ -4,7 +4,6 @@
 {% macro store_test_results(results) %}
 
   {%- set central_tbl -%} {{ target.schema }}.test_results_central {%- endset -%}
-  {%- set history_tbl -%} {{ target.schema }}.test_results_history {%- endset -%}
   {%- set test_results = [] -%}
   {%- for result in results if result.node.resource_type == 'test' -%}
     {%- do test_results.append(result) -%}

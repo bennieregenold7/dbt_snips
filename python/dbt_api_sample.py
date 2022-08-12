@@ -1,3 +1,5 @@
+from ast import AsyncFunctionDef
+from nntplib import ArticleInfo
 import os
 import requests
 import json
@@ -7,7 +9,6 @@ import datetime
 
 # provide account ID
 account_id = 51798
-
 
 # Save your API key for dbt CLoud to an environment 
 # variable named DBT_CLOUD_API_USER_TOKEN 
@@ -28,6 +29,16 @@ def call_api(url):
     return results
 
 
+def string_to_date(date_string:str):
+
+    if 'T' in date_string:
+        proper_date = datetime.datetime.strptime(date_string[:-7], '%Y-%m-%dT%H:%M:%S.%f')
+    else: 
+        proper_date = datetime.datetime.strptime(date_string[:-7], '%Y-%m-%d %H:%M:%S.%f')
+
+    return proper_date
+
+
 def get_run_details():
 
     run_url = base_url + '/runs?order_by=-id'
@@ -36,11 +47,28 @@ def get_run_details():
     for result in run_results['data']:
         run_id = result['id']
         run_status = result['status']
-        started_at = datetime.datetime.strptime(result['started_at'][:-7], '%Y-%m-%d %H:%M:%S.%f')
-        finished_at = datetime.datetime.strptime(result['finished_at'][:-7], '%Y-%m-%d %H:%M:%S.%f')
+        started_at = string_to_date(result['started_at'])
+        finished_at = string_to_date(result['finished_at'])
         execution_time = finished_at - started_at
         print(f'run {run_id} started at {started_at}, ran for {execution_time}, and had a status of {run_status}')
 
 
+def get_run_artifact(run_id: int, artifact_name: str):
+
+    assert artifact_name in ['manifest','catalog','run_results']
+
+    artifact_url = base_url + f'/runs/{run_id}/artifacts/{artifact_name}.json'
+    artifact_results = call_api(artifact_url)
+
+    return artifact_results
 
 
+def list_jobs():
+
+    job_url = base_url + '/jobs/'
+    job_results = call_api(job_url)
+
+    for job in job_results['data']:
+        job_name = job['name']
+        job_created_at = string_to_date(job['created_at'])
+        print(f'{job_name} was created at {job_created_at}')

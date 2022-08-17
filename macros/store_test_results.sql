@@ -43,6 +43,7 @@
     {% endif %}
     
     select
+      {{ dbt_utils.surrogate_key( "'"~test_name ~ "'" , dbt_utils.current_timestamp() ) }} as test_sk, 
       '{{ test_name }}'::text as test_name,
       '{{ result.node.name }}'::text as test_name_long,
       '{{ test_type}}'::text as test_type,

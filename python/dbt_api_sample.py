@@ -23,10 +23,9 @@ def call_api(url):
 
     response = requests.get(url, headers= HEADERS)
     response.raise_for_status()
-
-    results = response.json()
+    response.close()
         
-    return results
+    return response
 
 
 def string_to_date(date_string:str):
@@ -55,12 +54,25 @@ def get_run_details():
 
 def get_run_artifact(run_id: int, artifact_name: str):
 
-    assert artifact_name in ['manifest','catalog','run_results']
-
-    artifact_url = base_url + f'/runs/{run_id}/artifacts/{artifact_name}.json'
+    artifact_url = base_url + f'/runs/{run_id}/artifacts/{artifact_name}'
     artifact_results = call_api(artifact_url)
 
     return artifact_results
+
+## Once you get the artifact, you can handle it a few ways:
+
+    ## display the json content in a variable:
+        ## artifact.json()
+
+    ## write to json file with this:
+        ## with open('catalog.json', 'w') as file:
+            ## file.write(json.dumps(artifact.json()))
+
+    ## write to html file with this:
+        ## with open('index.html', 'w') as file:
+            ## file.wrtie(artifact.content.decode())
+
+    
 
 
 def list_jobs():
